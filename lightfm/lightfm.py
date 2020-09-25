@@ -664,12 +664,13 @@ class LightFM(object):
         if loss in ("warp", "bpr", "warp-kos"):
             # The CSR conversion needs to happen before shuffle indices are created.
             # Calling .tocsr may result in a change in the data arrays of the COO matrix,
-            positives_lookup = CSRMatrix(
-                self._get_positives_lookup_matrix(interactions)
-            )
+            positives_lookup = self._get_positives_lookup_matrix(interactions)
 
+        dtype = np.int32
+        if interactions.row.shape[0] > np.iinfo(np.int32).max:
+            dtype = np.int64
         # Create shuffle indexes.
-        shuffle_indices = np.arange(len(interactions.data), dtype=np.int32)
+        shuffle_indices = np.arange(len(interactions.data), dtype=dtype)
         self.random_state.shuffle(shuffle_indices)
 
         lightfm_data = self._get_lightfm_data()
@@ -677,8 +678,8 @@ class LightFM(object):
         # Call the estimation routines.
         if loss == "warp":
             fit_warp(
-                CSRMatrix(item_features),
-                CSRMatrix(user_features),
+                item_features,
+                user_features,
                 positives_lookup,
                 interactions.row,
                 interactions.col,
@@ -694,8 +695,8 @@ class LightFM(object):
             )
         elif loss == "bpr":
             fit_bpr(
-                CSRMatrix(item_features),
-                CSRMatrix(user_features),
+                item_features,
+                user_features,
                 positives_lookup,
                 interactions.row,
                 interactions.col,
@@ -711,8 +712,8 @@ class LightFM(object):
             )
         elif loss == "warp-kos":
             fit_warp_kos(
-                CSRMatrix(item_features),
-                CSRMatrix(user_features),
+                item_features,
+                user_features,
                 positives_lookup,
                 interactions.row,
                 shuffle_indices,
@@ -727,8 +728,8 @@ class LightFM(object):
             )
         else:
             fit_logistic(
-                CSRMatrix(item_features),
-                CSRMatrix(user_features),
+                item_features,
+                user_features,
                 interactions.row,
                 interactions.col,
                 interactions.data,
@@ -742,7 +743,7 @@ class LightFM(object):
             )
 
     def predict(
-        self, user_ids, item_ids, item_features=None, user_features=None, num_threads=1
+        self, user_ids, item_ids, item_features=None, user_features=None, num_threads=1, dtype=np.int32,
     ):
         """
         Compute the recommendation score for user-item pairs.
@@ -823,13 +824,14 @@ class LightFM(object):
         predictions = np.empty(len(user_ids), dtype=np.float64)
 
         predict_lightfm(
-            CSRMatrix(item_features),
-            CSRMatrix(user_features),
+            item_features,
+            user_features,
             user_ids,
             item_ids,
             predictions,
             lightfm_data,
             num_threads,
+            dtype,
         )
 
         return predictions
@@ -940,10 +942,10 @@ class LightFM(object):
         lightfm_data = self._get_lightfm_data()
 
         predict_ranks(
-            CSRMatrix(item_features),
-            CSRMatrix(user_features),
-            CSRMatrix(test_interactions),
-            CSRMatrix(train_interactions),
+            item_features,
+            user_features,
+            test_interactions,
+            train_interactions,
             ranks.data,
             lightfm_data,
             num_threads,
