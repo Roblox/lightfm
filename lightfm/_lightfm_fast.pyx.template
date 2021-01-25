@@ -270,7 +270,7 @@ cdef inline flt sigmoid(flt v) nogil:
 
 cdef inline int in_positives(int item_id, int user_id, integral[:] interactions_indptr, integral[:] interactions_indices) nogil:
 
-    cdef int i, start_idx, stop_idx
+    cdef long i, start_idx, stop_idx
 
     start_idx = interactions_indptr[user_id]
     stop_idx = interactions_indptr[user_id + 1]
@@ -299,7 +299,7 @@ cdef inline void compute_representation(integral[:] features_indptr,
     The last element of the representation is the bias.
     """
 
-    cdef int i, j, start_index, stop_index, feature
+    cdef long i, j, feature, start_index, stop_index
     cdef flt feature_weight
 
     start_index = features_indptr[row_id]
@@ -339,8 +339,8 @@ cdef inline flt compute_prediction_from_repr(flt *user_repr,
 
 cdef double update_biases(integral[:] feature_indices,
                           flt[:] feature_data,
-                          int start,
-                          int stop,
+                          long start,
+                          long stop,
                           flt[::1] biases,
                           flt[::1] gradients,
                           flt[::1] momentum,
@@ -354,7 +354,7 @@ cdef double update_biases(integral[:] feature_indices,
     Perform a SGD update of the bias terms.
     """
 
-    cdef int i, feature
+    cdef long i, feature
     cdef double feature_weight, local_learning_rate, sum_learning_rate, update
 
     sum_learning_rate = 0.0
@@ -401,8 +401,8 @@ cdef inline double update_features(integral[:] feature_indices,
                                    flt[:, ::1] gradients,
                                    flt[:, ::1] momentum,
                                    int component,
-                                   int start,
-                                   int stop,
+                                   long start,
+                                   long stop,
                                    double gradient,
                                    int adadelta,
                                    double learning_rate,
@@ -413,7 +413,7 @@ cdef inline double update_features(integral[:] feature_indices,
     Update feature vectors.
     """
 
-    cdef int i, feature,
+    cdef long i, feature,
     cdef double feature_weight, local_learning_rate, sum_learning_rate, update
 
     sum_learning_rate = 0.0
@@ -474,7 +474,7 @@ cdef inline void update(double loss,
     Apply the gradient step.
     """
 
-    cdef int i, j, item_start_index, item_stop_index, user_start_index, user_stop_index
+    cdef long i, j, item_start_index, item_stop_index, user_start_index, user_stop_index
     cdef double avg_learning_rate
     cdef flt item_component, user_component
 
@@ -563,8 +563,8 @@ cdef void warp_update(double loss,
     Apply the gradient step.
     """
 
-    cdef int i, j, positive_item_start_index, positive_item_stop_index
-    cdef int  user_start_index, user_stop_index, negative_item_start_index, negative_item_stop_index
+    cdef long i, j, positive_item_start_index, positive_item_stop_index
+    cdef long  user_start_index, user_stop_index, negative_item_start_index, negative_item_stop_index
     cdef double avg_learning_rate
     cdef flt positive_item_component, negative_item_component, user_component
 
@@ -669,9 +669,9 @@ cdef void regularize(FastLightFM lightfm,
     Apply accumulated L2 regularization to all features.
     """
 
-    cdef int i, j
-    cdef int no_features = lightfm.item_features.shape[0]
-    cdef int no_users = lightfm.user_features.shape[0]
+    cdef long i, j
+    cdef long no_features = lightfm.item_features.shape[0]
+    cdef long no_users = lightfm.user_features.shape[0]
 
     for i in range(no_features):
         for j in range(lightfm.no_components):
@@ -745,9 +745,9 @@ def _fit_logistic(integral[:] item_features_indptr,
     Fit the LightFM model.
     """
 
-    cdef int i, no_examples, user_id, item_id, row
+    cdef long i, no_examples, user_id, item_id, row
     cdef double prediction, loss
-    cdef int y
+    cdef long y
     cdef flt y_row, weight
     cdef flt *user_repr
     cdef flt *it_repr
@@ -872,8 +872,8 @@ def _fit_warp(integral[:] item_features_indptr,
     Fit the model using the WARP loss.
     """
 
-    cdef int i, no_examples, user_id, positive_item_id, gamma
-    cdef int negative_item_id, sampled, row
+    cdef long i, no_examples, user_id, positive_item_id, gamma
+    cdef long negative_item_id, sampled, row
     cdef double positive_prediction, negative_prediction
     cdef double loss, MAX_LOSS
     cdef flt weight
@@ -1038,9 +1038,9 @@ def _fit_warp_kos(integral[:] item_features_indptr,
     Fit the model using the WARP loss.
     """
 
-    cdef int i, j, no_examples, user_id, positive_item_id, gamma
-    cdef int negative_item_id, sampled, row, sampled_positive_item_id
-    cdef int user_pids_start, user_pids_stop, no_positives, POS_SAMPLES
+    cdef long i, j, no_examples, user_id, positive_item_id, gamma
+    cdef long negative_item_id, sampled, row, sampled_positive_item_id
+    cdef long user_pids_start, user_pids_stop, no_positives, POS_SAMPLES
     cdef double positive_prediction, negative_prediction
     cdef double loss, MAX_LOSS, sampled_positive_prediction
     cdef flt *user_repr
@@ -1236,8 +1236,8 @@ def _fit_bpr(integral[:] item_features_indptr,
     Fit the model using the BPR loss.
     """
 
-    cdef int i, j, no_examples, user_id, positive_item_id
-    cdef int negative_item_id, sampled, row
+    cdef long i, j, no_examples, user_id, positive_item_id
+    cdef long negative_item_id, sampled, row
     cdef double positive_prediction, negative_prediction
     cdef flt weight
     cdef unsigned int[::1] random_states
@@ -1367,7 +1367,7 @@ def _predict_lightfm(integral[:] item_features_indptr,
     Generate predictions.
     """
 
-    cdef int i, no_examples
+    cdef long i, no_examples
     cdef flt *user_repr
     cdef flt *it_repr
 
@@ -1418,7 +1418,7 @@ def predict_ranks(item_features,
     _predict_ranks(item_features.indptr.astype(dtype), item_features.indices.astype(dtype), item_features.data,
                    user_features.indptr.astype(dtype), user_features.indices.astype(dtype), user_features.data,
                    test_interactions.indptr, test_interactions.indices,
-                   train_interactions.indptr, train_interactions.indices, test_interactions.shape[0],
+                   train_interactions.indptr.astype(dtype), train_interactions.indices.astype(dtype), test_interactions.shape[0],
                    test_interactions.shape[1], ranks, lightfm, num_threads)
 
 
@@ -1440,7 +1440,7 @@ def _predict_ranks(integral[:] item_features_indptr,
     """
     """
 
-    cdef int i, j, user_id, item_id, predictions_size, row_start, row_stop
+    cdef long i, j, user_id, item_id, predictions_size, row_start, row_stop
     cdef flt *user_repr
     cdef flt *it_repr
     cdef flt *predictions
@@ -1548,7 +1548,7 @@ def _calculate_auc_from_rank(integral[:] ranks_indptr,
                              flt[::1] auc,
                              int num_threads):
 
-    cdef int i, j, user_id, row_start, row_stop, num_negatives, num_positives
+    cdef long i, j, user_id, row_start, row_stop, num_negatives, num_positives
     cdef flt rank
 
     {nogil_block}

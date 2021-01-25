@@ -245,7 +245,7 @@ def auc_score(
     # here we don't care about the inconsistency
     # introduced into the ranks matrix.
     calculate_auc_from_rank(
-        CSRMatrix(ranks), num_train_positives, ranks.data, auc, num_threads
+        ranks, num_train_positives, ranks.data, auc, num_threads
     )
 
     if not preserve_rows:
